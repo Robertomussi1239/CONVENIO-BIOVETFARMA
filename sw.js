@@ -1,0 +1,2 @@
+self.addEventListener('install',(e)=>{e.waitUntil(caches.open('biovetfarma-v1').then(c=>c.addAll(['/','/index.html','/styles.css','/manifest.webmanifest','/assets/logo.png','/assets/icons/icon-192.png','/assets/icons/icon-512.png','/app.js','/api.js','/firebase-config.js'])))});
+self.addEventListener('fetch',(e)=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)))})

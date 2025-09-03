@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Convênio Biovetfarma</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#2bb380">
+  <link rel="icon" href="assets/icons/icon-192.png">
+  <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <div class="header">
+      <img src="assets/logo.png" alt="Biovetfarma logo"/>
+      <h1>Convênio Biovetfarma</h1>
+      <div style="margin-left:auto" id="userBadge" class="small"></div>
+    </div>
+    <div id="view-login" class="card">
+      <h2>Entrar</h2>
+      <div class="row">
+        <div class="col">
+          <div class="input"><label for="email">Email</label><input id="email" type="email" placeholder="voce@empresa.com" autocomplete="username" required></div>
+          <div class="input"><label for="password">Senha</label><input id="password" type="password" placeholder="********" autocomplete="current-password" required></div>
+          <button class="btn" id="btnLogin">Entrar</button>
+          <div style="margin-top:10px"><a href="#" id="linkReset">Esqueci minha senha</a> · <a href="#" id="linkSignup">Criar conta</a></div>
+          <div id="loginMsg" class="small" style="margin-top:8px"></div>
+        </div>
+      </div>
+    </div>
+    <div id="view-signup" class="card hidden">
+      <h2>Criar conta</h2>
+      <div class="row">
+        <div class="col">
+          <div class="input"><label for="signupName">Nome completo</label><input id="signupName" type="text" placeholder="Seu nome" autocomplete="name"></div>
+          <div class="input"><label for="signupEmail">Email</label><input id="signupEmail" type="email" placeholder="voce@empresa.com" autocomplete="email"></div>
+          <div class="input"><label for="signupPassword">Senha</label><input id="signupPassword" type="password" placeholder="********" autocomplete="new-password"></div>
+          <button class="btn" id="btnSignup">Criar</button>
+          <button class="btn secondary" id="btnBackToLogin" style="margin-left:10px">Voltar</button>
+          <div class="small" style="margin-top:8px">Observação: o administrador precisa vincular seu email à aba do funcionário na planilha para liberar o acesso.</div>
+          <div id="signupMsg" class="small" style="margin-top:8px"></div>
+        </div>
+      </div>
+    </div>
+    <div id="view-app" class="hidden">
+      <div class="layout">
+        <div class="nav">
+          <a href="#" class="link active" data-nav="home">Home</a>
+          <a href="#" class="link" data-nav="compras">Compras</a>
+          <a href="#" class="link" data-nav="historico">Histórico</a>
+          <a href="#" class="link hidden" data-nav="admin">Dashboard (Admin)</a>
+          <a href="#" class="link" id="linkLogout">Sair</a>
+        </div>
+        <div class="col">
+          <div id="page-home" class="card">
+            <h2>Olá, <span id="homeName">...</span> 👋</h2>
+            <p class="small">Aqui você vê seus dados cadastrais e navega entre Compras e Histórico.</p>
+            <div class="row" style="margin-top:12px"><div class="col"><div class="card"><b>Seus dados</b><div id="profileBox" class="small" style="margin-top:8px"></div></div></div></div>
+          </div>
+          <div id="page-compras" class="card hidden">
+            <h2>Solicitar compra</h2>
+            <div class="input"><label for="orcamento">Número do orçamento</label><input id="orcamento" type="text" placeholder="Ex.: 250900030" inputmode="numeric"></div>
+            <button class="btn" id="btnSubmitCompra">Submeter para aprovação</button>
+            <div id="comprasMsg" class="small" style="margin-top:8px"></div>
+          </div>
+          <div id="page-historico" class="card hidden">
+            <h2>Histórico de autorizações</h2>
+            <div class="notice">Pedidos autorizados para desconto em folha:</div>
+            <table class="table" id="histTable"><thead><tr><th>Data</th><th>Orçamento</th><th>Valor</th><th>Autorização</th></tr></thead><tbody></tbody></table>
+          </div>
+          <div id="page-admin" class="card hidden">
+            <h2>Dashboard (Admin)</h2>
+            <div class="row" style="align-items:center">
+              <div class="col"><b id="adminEmployeeName">Funcionário</b></div>
+              <div class="col" style="text-align:right"><button class="btn secondary" id="btnPrevEmp">◀ Anterior</button> <button class="btn" id="btnNextEmp">Próximo ▶</button></div>
+            </div>
+            <table class="table" id="adminHistTable" style="margin-top:12px"><thead><tr><th>Data</th><th>Orçamento</th><th>Valor</th><th>Autorização</th></tr></thead><tbody></tbody></table>
+          </div>
+        </div>
+      </div>
+      <div class="footer">© Convênio Biovetfarma</div>
+    </div>
+  </div>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="api.js"></script>
+  <script src="app.js"></script>
+  <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('/sw.js');});}</script>
+</body>
+</html>
