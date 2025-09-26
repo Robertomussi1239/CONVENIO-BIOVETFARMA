@@ -1,11 +1,10 @@
-// api.js — já com o endpoint correto do Apps Script
+// api.js — integra PWA com Google Apps Script
 
+// URL do WebApp publicado no Apps Script
 const API_BASE = "https://script.google.com/macros/s/AKfycbzKjMitdqHzEWb8BUGx0VSLiOHuJMQmkbEDYd_BT9oFj5JjxJHfRiGvGjVG3XbjXcMm/exec";
 
 /**
- * Chama o Apps Script via POST
- * @param {string} action Ação que queremos que o backend faça
- * @param {Object} payload Dados extras (por exemplo: orcamento)
+ * Faz POST para o Apps Script com token do Firebase
  */
 async function apiPost(action, payload = {}) {
   const user = firebase.auth().currentUser;
@@ -24,27 +23,27 @@ async function apiPost(action, payload = {}) {
   } catch (e) {
     console.error("Resposta não JSON:", text);
   }
-
-  if (!res.ok) {
-    throw new Error(json.error || "Erro na API");
-  }
+  if (!res.ok) throw new Error(json.error || "Erro na API");
   return json;
 }
 
-// Interfaces de uso no frontend:
-
-/** retorna dados do usuário (nome, email, aba, role) */
+/**
+ * Quem sou eu (dados do funcionário)
+ */
 async function whoami() {
   return apiPost("whoami");
 }
 
-/** envia nova compra/orçamento (sem valor) */
+/**
+ * Submeter solicitação de compra
+ */
 async function submitAprovacao(orcamento) {
   return apiPost("submitApproval", { orcamento });
 }
 
-/** obtém histórico de compras do usuário */
+/**
+ * Buscar histórico
+ */
 async function getHistorico() {
   return apiPost("getHistory");
 }
-
