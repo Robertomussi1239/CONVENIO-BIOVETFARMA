@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Compras - Convênio Biovetfarma</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="firebase-config.js" defer></script>
+  <script src="api.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <div class="header">
+      <img src="assets/logo.png" alt="Logo">
+      <h1>Convênio Biovetfarma</h1>
+    </div>
+
+    <div class="layout">
+      <nav class="nav">
+        <a href="index.html" class="link">Home</a>
+        <a href="compras.html" class="link active">Compras</a>
+        <a href="historico.html" class="link">Histórico</a>
+        <a href="#" id="btnLogout" class="link">Sair</a>
+      </nav>
+
+      <main class="col">
+        <h2>Nova Compra</h2>
+        <div class="card">
+          <div class="input">
+            <label for="inputOrcamento">Nº Orçamento</label>
+            <input id="inputOrcamento" type="text" placeholder="Digite o número do orçamento">
+          </div>
+          <button class="btn" id="btnSubmitCompra">Enviar</button>
+        </div>
+      </main>
+    </div>
+
+    <div class="footer">
+      © Convênio Biovetfarma
+    </div>
+  </div>
+</body>
+</html>
