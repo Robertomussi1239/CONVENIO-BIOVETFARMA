@@ -1,24 +1,33 @@
-// api.js — apontando para a NOVA URL do Apps Script
+const BASE_URL = "https://script.google.com/macros/s/SEU_DEPLOY_ID/exec";
 
-const API_BASE = "https://script.google.com/macros/s/AKfycbw2qlBF3jipHnWe2Qs1JpQsq8yhZCR7cT122FwMOHLnoiaXx8MnJv3AY-ZWaeKAlR8bAg/exec";
-
-async function apiPost(action, payload = {}) {
-  const user = firebase.auth().currentUser;
-  const idToken = user ? await user.getIdToken() : null;
-
-  const res = await fetch(API_BASE, {
+async function apiPost(action, payload) {
+  const resp = await fetch(BASE_URL, {
     method: "POST",
-    headers: { "Content-Type": "text/plain" }, // mantém text/plain para evitar preflight
-    body: JSON.stringify({ action, Authorization: `Bearer ${idToken}`, ...payload })
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action, ...payload })
   });
-
-  const text = await res.text();
-  let json = {};
-  try { json = JSON.parse(text); } catch (e) { console.error("Resposta não JSON:", text); }
-  if (!res.ok) throw new Error(json.error || "Erro na API");
-  return json;
+  return await resp.json();
 }
 
-async function whoami(){ return apiPost("whoami"); }
-async function submitAprovacao(orcamento){ return apiPost("submitApproval", { orcamento }); }
-async function getHistorico(tab){ return apiPost("getHistory", { tab }); }
+// Cadastro automático no 1º login
+firebase.auth().onAuthStateChanged(async (user) => {
+  if (!user) return;
+  const nome  = user.displayName || user.email.split("@")[0];
+  const email = user.email;
+  await apiPost("registrarFuncionario", { nome, email });
+});
+
+// Nova compra (sem valor)
+async function enviarCompra(orcamento) {
+  const user = firebase.auth().currentUser;
+  if (!user) throw new Error("Usuário não logado");
+  return await apiPost("novaCompra", { email: user.email, orcamento });
+}
+
+// Histórico
+async function carregarHistorico() {
+  const user = firebase.auth().currentUser;
+  if (!user) return { historico: [] };
+  return await apiPost("listarHistorico", { email: user.email });
+}
+
