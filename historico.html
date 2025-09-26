@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Histórico - Convênio Biovetfarma</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="firebase-config.js" defer></script>
+  <script src="api.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <div class="header">
+      <img src="assets/logo.png" alt="Logo">
+      <h1>Convênio Biovetfarma</h1>
+    </div>
+
+    <div class="layout">
+      <nav class="nav">
+        <a href="index.html" class="link">Home</a>
+        <a href="compras.html" class="link">Compras</a>
+        <a href="historico.html" class="link active">Histórico</a>
+        <a href="#" id="btnLogout" class="link">Sair</a>
+      </nav>
+
+      <main class="col">
+        <h2>Histórico de Compras</h2>
+        <div class="card">
+          <table class="table" id="tabelaHistorico">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Orçamento</th>
+                <th>Valor</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </main>
+    </div>
+
+    <div class="footer">
+      © Convênio Biovetfarma
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      const res = await carregarHistorico();
+      if (res.success) {
+        const tbody = document.querySelector("#tabelaHistorico tbody");
+        res.historico.forEach(row => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${row["DATA"] || ""}</td>
+            <td>${row["N° ORÇAMENTO"] || ""}</td>
+            <td>${row["VALOR"] || ""}</td>
+            <td>${row["AUTORIZAÇÃO"] || ""}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } else {
+        alert("Erro ao carregar histórico: " + res.error);
+      }
+    });
+  </script>
+</body>
+</html>
