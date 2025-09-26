@@ -2,7 +2,7 @@
 // - usa caminhos RELATIVOS
 // - não intercepta chamadas ao script.google.com (API do Apps Script)
 
-const VERSION = 'biovetfarma-v7'; // ⚡ altere SEMPRE que fizer deploy
+const VERSION = 'biovetfarma-v7'; // mude quando publicar para forçar atualização
 const ASSETS = [
   './',
   './index.html',
@@ -16,12 +16,14 @@ const ASSETS = [
   './firebase-config.js'
 ];
 
+// Instala e coloca em cache os assets
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(VERSION).then(cache => cache.addAll(ASSETS))
   );
 });
 
+// Remove versões antigas
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then(keys =>
@@ -30,11 +32,11 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Estratégia: cache-first para assets do app; rede para a API
+// Estratégia: cache-first para assets locais; rede para API
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Não intercepta a API do Google Apps Script
+  // Não intercepta chamadas ao Google Apps Script
   if (url.hostname === 'script.google.com') {
     return; // deixa ir direto para a rede
   }
