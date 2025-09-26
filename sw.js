@@ -2,7 +2,7 @@
 // - usa caminhos RELATIVOS
 // - não intercepta chamadas ao script.google.com (API do Apps Script)
 
-const VERSION = 'biovetfarma-v6'; // ⚡ altere SEMPRE que fizer deploy
+const VERSION = 'biovetfarma-v7'; // ⚡ altere SEMPRE que fizer deploy
 const ASSETS = [
   './',
   './index.html',
