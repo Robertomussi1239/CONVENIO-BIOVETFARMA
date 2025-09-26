@@ -1,9 +1,11 @@
-// api.js — apontando para a NOVA URL do Apps Script
+// api.js — já com o endpoint correto do Apps Script
 
 const API_BASE = "https://script.google.com/macros/s/AKfycbzKjMitdqHzEWb8BUGx0VSLiOHuJMQmkbEDYd_BT9oFj5JjxJHfRiGvGjVG3XbjXcMm/exec";
 
 /**
- * Envia requisição POST para o backend do Apps Script
+ * Chama o Apps Script via POST
+ * @param {string} action Ação que queremos que o backend faça
+ * @param {Object} payload Dados extras (por exemplo: orcamento)
  */
 async function apiPost(action, payload = {}) {
   const user = firebase.auth().currentUser;
@@ -11,7 +13,7 @@ async function apiPost(action, payload = {}) {
 
   const res = await fetch(API_BASE, {
     method: "POST",
-    headers: { "Content-Type": "text/plain" }, // evita CORS preflight
+    headers: { "Content-Type": "text/plain" },
     body: JSON.stringify({ action, Authorization: `Bearer ${idToken}`, ...payload })
   });
 
@@ -22,21 +24,27 @@ async function apiPost(action, payload = {}) {
   } catch (e) {
     console.error("Resposta não JSON:", text);
   }
-  if (!res.ok) throw new Error(json.error || "Erro na API");
+
+  if (!res.ok) {
+    throw new Error(json.error || "Erro na API");
+  }
   return json;
 }
 
-/**
- * Funções de alto nível chamadas pelo app.js
- */
+// Interfaces de uso no frontend:
+
+/** retorna dados do usuário (nome, email, aba, role) */
 async function whoami() {
   return apiPost("whoami");
 }
 
+/** envia nova compra/orçamento (sem valor) */
 async function submitAprovacao(orcamento) {
   return apiPost("submitApproval", { orcamento });
 }
 
-async function getHistorico(tab) {
-  return apiPost("getHistory", { tab });
+/** obtém histórico de compras do usuário */
+async function getHistorico() {
+  return apiPost("getHistory");
 }
+
