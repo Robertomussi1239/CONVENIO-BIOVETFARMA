@@ -1,33 +1,42 @@
-const BASE_URL = "https://script.google.com/macros/s/SEU_DEPLOY_ID/exec";
+// api.js — apontando para a NOVA URL do Apps Script
 
-async function apiPost(action, payload) {
-  const resp = await fetch(BASE_URL, {
+const API_BASE = "https://script.google.com/macros/s/AKfycbzKjMitdqHzEWb8BUGx0VSLiOHuJMQmkbEDYd_BT9oFj5JjxJHfRiGvGjVG3XbjXcMm/exec";
+
+/**
+ * Envia requisição POST para o backend do Apps Script
+ */
+async function apiPost(action, payload = {}) {
+  const user = firebase.auth().currentUser;
+  const idToken = user ? await user.getIdToken() : null;
+
+  const res = await fetch(API_BASE, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ action, ...payload })
+    headers: { "Content-Type": "text/plain" }, // evita CORS preflight
+    body: JSON.stringify({ action, Authorization: `Bearer ${idToken}`, ...payload })
   });
-  return await resp.json();
+
+  const text = await res.text();
+  let json = {};
+  try {
+    json = JSON.parse(text);
+  } catch (e) {
+    console.error("Resposta não JSON:", text);
+  }
+  if (!res.ok) throw new Error(json.error || "Erro na API");
+  return json;
 }
 
-// Cadastro automático no 1º login
-firebase.auth().onAuthStateChanged(async (user) => {
-  if (!user) return;
-  const nome  = user.displayName || user.email.split("@")[0];
-  const email = user.email;
-  await apiPost("registrarFuncionario", { nome, email });
-});
-
-// Nova compra (sem valor)
-async function enviarCompra(orcamento) {
-  const user = firebase.auth().currentUser;
-  if (!user) throw new Error("Usuário não logado");
-  return await apiPost("novaCompra", { email: user.email, orcamento });
+/**
+ * Funções de alto nível chamadas pelo app.js
+ */
+async function whoami() {
+  return apiPost("whoami");
 }
 
-// Histórico
-async function carregarHistorico() {
-  const user = firebase.auth().currentUser;
-  if (!user) return { historico: [] };
-  return await apiPost("listarHistorico", { email: user.email });
+async function submitAprovacao(orcamento) {
+  return apiPost("submitApproval", { orcamento });
 }
 
+async function getHistorico(tab) {
+  return apiPost("getHistory", { tab });
+}
