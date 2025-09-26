@@ -1,190 +1,180 @@
-// app.js — controla navegação e telas do PWA
+// app.js — controla navegação e autenticação Firebase + integração com api.js
 
-let currentUser = null;
+const qs = (sel) => document.querySelector(sel);
+const qsa = (sel) => Array.from(document.querySelectorAll(sel));
+const show = (id, on = true) => {
+  const el = qs(id);
+  if (el) el.classList.toggle("hidden", !on);
+};
 
-// elementos
-const nav = document.querySelector(".nav");
-const content = document.getElementById("content");
-
-// ============================================================
-// Inicialização do Firebase
-// ============================================================
-firebase.auth().onAuthStateChanged(async (user) => {
-  if (user) {
-    currentUser = user;
-    renderApp();
-  } else {
-    renderLogin();
-  }
-});
-
-// ============================================================
-// Renderização
-// ============================================================
-function renderLogin() {
-  nav.innerHTML = "";
-  content.innerHTML = `
-    <div class="card center">
-      <h2>Entrar</h2>
-      <input id="email" type="email" placeholder="Email" />
-      <input id="senha" type="password" placeholder="Senha" />
-      <button class="btn" onclick="login()">Entrar</button>
-      <p class="small">
-        <a href="#" onclick="register()">Criar conta</a>
-      </p>
-    </div>
-  `;
+// Navegação
+function setActiveNav(name) {
+  qsa(".nav .link").forEach(a => {
+    const isActive = a.dataset.nav === name;
+    a.classList.toggle("active", isActive);
+    const pageId = "#page-" + a.dataset.nav;
+    if (qs(pageId)) show(pageId, isActive);
+  });
 }
 
-async function renderApp() {
-  try {
-    const me = await whoami();
-    currentUser.info = me;
-
-    // menu
-    nav.innerHTML = `
-      <a href="#" class="link active" onclick="showPage('home')">Home</a>
-      <a href="#" class="link" onclick="showPage('compras')">Compras</a>
-      <a href="#" class="link" onclick="showPage('historico')">Histórico</a>
-      <a href="#" class="link" onclick="logout()">Sair</a>
-    `;
-
-    showPage("home");
-  } catch (err) {
-    console.error("Erro renderApp", err);
-    alert("Erro ao carregar dados do usuário.");
-  }
+function bindNav() {
+  qsa(".nav .link").forEach(a =>
+    a.addEventListener("click", e => {
+      e.preventDefault();
+      setActiveNav(a.dataset.nav);
+    })
+  );
 }
 
-function setActive(page) {
-  document.querySelectorAll(".nav .link").forEach(a => a.classList.remove("active"));
-  const link = [...document.querySelectorAll(".nav .link")].find(a => a.textContent === page);
-  if (link) link.classList.add("active");
+// Renderização da Home
+async function renderHome(userInfo) {
+  qs("#homeName").textContent = userInfo.nome || userInfo.email || "Funcionário";
+  const lines = [
+    `Email: ${userInfo.email}`,
+    `Papel: ${userInfo.role || "funcionário"}`,
+    `Aba na planilha: ${userInfo.aba || "(aguardando liberação)"}`
+  ];
+  qs("#profileBox").innerHTML = lines.map(l => `<div>${l}</div>`).join("");
 }
 
-// ============================================================
-// Páginas
-// ============================================================
-function showPage(page) {
-  setActive(page === "home" ? "Home" : page.charAt(0).toUpperCase() + page.slice(1));
-
-  if (page === "home") return renderHome();
-  if (page === "compras") return renderCompras();
-  if (page === "historico") return renderHistorico();
-}
-
-// Home
-function renderHome() {
-  const me = currentUser.info || {};
-  content.innerHTML = `
-    <div class="card">
-      <h2>Olá, ${me.nome || "Funcionário"} 👋</h2>
-      <p>Aqui você vê seus dados cadastrais e navega entre Compras e Histórico.</p>
-      <div class="notice">
-        <p><b>Seus dados</b></p>
-        <p>Email: ${me.email || "-"}</p>
-        <p>Papel: ${me.role || "-"}</p>
-        <p>Aba na planilha: ${me.aba || "(aguardando liberação)"}</p>
-      </div>
-    </div>
-  `;
-}
-
-// Compras
-function renderCompras() {
-  content.innerHTML = `
-    <div class="card">
-      <h2>Nova Compra</h2>
-      <div class="input">
-        <label>Nº Orçamento</label>
-        <input id="orcamento" placeholder="Digite o nº do orçamento" />
-      </div>
-      <button class="btn" onclick="enviarCompra()">Enviar</button>
-    </div>
-  `;
-}
-
-async function enviarCompra() {
-  const orc = document.getElementById("orcamento").value.trim();
-  if (!orc) return alert("Digite o nº do orçamento.");
-  try {
-    const res = await submitAprovacao(orc);
-    if (res.success) {
-      alert(`Solicitação enviada com código ${res.codigo}`);
-      showPage("historico");
-    } else {
-      alert("Erro: " + res.error);
-    }
-  } catch (err) {
-    alert("Falha: " + err.message);
-  }
-}
-
-// Histórico
+// Renderização do Histórico
 async function renderHistorico() {
-  content.innerHTML = `<div class="card"><p>Carregando histórico...</p></div>`;
-  try {
-    const res = await getHistorico();
-    if (!res.success) throw new Error(res.error);
-
-    let html = `
-      <div class="card">
-        <h2>Histórico de Compras</h2>
-        <table class="table">
-          <tr>
-            <th>Data</th>
-            <th>Orçamento</th>
-            <th>Valor</th>
-            <th>Status</th>
-          </tr>
-    `;
-
-    res.rows.forEach(r => {
-      let statusClass = "muted";
-      if (r.autorizacao && r.autorizacao.includes("Aprovado")) statusClass = "green";
-      else if (r.autorizacao && r.autorizacao.includes("Pendente")) statusClass = "orange";
-
-      html += `
-        <tr>
-          <td>${r.data || ""}</td>
-          <td>${r.orcamento || ""}</td>
-          <td>${r.valor || ""}</td>
-          <td class="${statusClass}">${r.autorizacao || ""}</td>
-        </tr>
-      `;
-    });
-
-    html += `</table></div>`;
-    content.innerHTML = html;
-  } catch (err) {
-    content.innerHTML = `<div class="card">Erro: ${err.message}</div>`;
-  }
+  const { rows } = await getHistorico();
+  const tbody = qs("#histTable tbody");
+  tbody.innerHTML = "";
+  (rows || []).forEach(r => {
+    const tr = document.createElement("tr");
+    let statusClass = "";
+    if (r.autorizacao && r.autorizacao.toLowerCase().includes("aprovado")) statusClass = "green";
+    else if (r.autorizacao && r.autorizacao.toLowerCase().includes("pendente")) statusClass = "orange";
+    tr.innerHTML = `
+      <td>${r.data || ""}</td>
+      <td>${r.orcamento || ""}</td>
+      <td>${r.valor || ""}</td>
+      <td class="${statusClass}">${r.autorizacao || ""}</td>`;
+    tbody.appendChild(tr);
+  });
 }
 
 // ============================================================
-// Autenticação Firebase
+// Autenticação e eventos
 // ============================================================
-async function login() {
-  const email = document.getElementById("email").value;
-  const senha = document.getElementById("senha").value;
-  try {
-    await firebase.auth().signInWithEmailAndPassword(email, senha);
-  } catch (err) {
-    alert("Erro no login: " + err.message);
-  }
+function wireAuthUI() {
+  const loginView = "#view-login";
+  const signupView = "#view-signup";
+  const appView = "#view-app";
+
+  // Login
+  qs("#btnLogin").onclick = async () => {
+    const email = qs("#email").value.trim();
+    const pass = qs("#password").value.trim();
+    qs("#loginMsg").textContent = "Entrando...";
+    try {
+      await firebase.auth().signInWithEmailAndPassword(email, pass);
+      qs("#loginMsg").textContent = "";
+    } catch (err) {
+      qs("#loginMsg").textContent = err.message;
+    }
+  };
+
+  // Reset de senha
+  qs("#linkReset").onclick = async (e) => {
+    e.preventDefault();
+    const email = qs("#email").value.trim();
+    if (!email) {
+      qs("#loginMsg").textContent = "Digite o email para recuperar a senha.";
+      return;
+    }
+    try {
+      await firebase.auth().sendPasswordResetEmail(email);
+      qs("#loginMsg").textContent = "Email de recuperação enviado.";
+    } catch (err) {
+      qs("#loginMsg").textContent = err.message;
+    }
+  };
+
+  // Navegar para cadastro
+  qs("#linkSignup").onclick = (e) => {
+    e.preventDefault();
+    show(loginView, false);
+    show(signupView, true);
+  };
+
+  // Voltar para login
+  qs("#btnBackToLogin").onclick = () => {
+    show(signupView, false);
+    show(loginView, true);
+  };
+
+  // Cadastro
+  qs("#btnSignup").onclick = async () => {
+    const name = qs("#signupName").value.trim();
+    const email = qs("#signupEmail").value.trim();
+    const pass = qs("#signupPassword").value.trim();
+    qs("#signupMsg").textContent = "Criando conta...";
+    try {
+      const cred = await firebase.auth().createUserWithEmailAndPassword(email, pass);
+      if (name) await cred.user.updateProfile({ displayName: name });
+      qs("#signupMsg").textContent = "Conta criada. Faça login.";
+    } catch (err) {
+      qs("#signupMsg").textContent = err.message;
+    }
+  };
+
+  // Logout
+  qs("#linkLogout").onclick = () => firebase.auth().signOut();
+
+  // Submeter compra
+  qs("#btnSubmitCompra").onclick = async () => {
+    const n = qs("#orcamento").value.trim();
+    if (!n) {
+      qs("#comprasMsg").textContent = "Digite o número do orçamento.";
+      return;
+    }
+    qs("#comprasMsg").textContent = "Enviando...";
+    try {
+      const resp = await submitAprovacao(n);
+      if (resp.success) {
+        qs("#comprasMsg").textContent = "Solicitação enviada! Código: " + resp.codigo;
+        qs("#orcamento").value = "";
+        await renderHistorico();
+        setActiveNav("historico");
+      } else {
+        qs("#comprasMsg").textContent = resp.error;
+      }
+    } catch (err) {
+      qs("#comprasMsg").textContent = err.message;
+    }
+  };
+
+  // Monitor de login/logout
+  firebase.auth().onAuthStateChanged(async (user) => {
+    if (!user) {
+      show(appView, false);
+      show(signupView, false);
+      show(loginView, true);
+      qs("#userBadge").textContent = "";
+      return;
+    }
+
+    show(loginView, false);
+    show(signupView, false);
+    show(appView, true);
+    qs("#userBadge").textContent = user.email;
+
+    try {
+      const me = await whoami();
+      await renderHome(me);
+      if (me.aba) {
+        await renderHistorico();
+      }
+      bindNav();
+      setActiveNav("home");
+    } catch (err) {
+      alert("Erro ao carregar dados: " + err.message);
+    }
+  });
 }
 
-async function register() {
-  const email = document.getElementById("email").value;
-  const senha = document.getElementById("senha").value;
-  try {
-    await firebase.auth().createUserWithEmailAndPassword(email, senha);
-    alert("Conta criada com sucesso. Agora faça login.");
-  } catch (err) {
-    alert("Erro no cadastro: " + err.message);
-  }
-}
-
-async function logout() {
-  await firebase.auth().signOut();
-}
+// Inicia
+wireAuthUI();
